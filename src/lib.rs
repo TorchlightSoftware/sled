@@ -207,6 +207,7 @@ mod subscriber;
 mod sys_limits;
 pub mod transaction;
 mod tree;
+pub mod wasm_utils;
 
 /// Functionality for conditionally triggering failpoints under test.
 #[cfg(feature = "failpoints")]
