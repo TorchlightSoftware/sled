@@ -431,10 +431,10 @@ impl Config {
             .as_nanos()
             << 48;
 
-        #[cfg(not(miri))]
+        #[cfg(all(not(miri), not(target_os = "wasi")))]
         let pid = u128::from(std::process::id());
 
-        #[cfg(miri)]
+        #[cfg(any(miri, target_os = "wasi"))]
         let pid = 0;
 
         let salt = (pid << 16) + now + seed;
@@ -442,6 +442,9 @@ impl Config {
         if cfg!(target_os = "linux") {
             // use shared memory for temporary linux files
             format!("/dev/shm/pagecache.tmp.{}", salt).into()
+        } else if cfg!(target_os = "wasi") {
+            // temp_dir is unimplemented, but the fs API works
+            format!("/tmp/pagecache.tmp.{}", salt).into()
         } else {
             std::env::temp_dir().join(format!("pagecache.tmp.{}", salt))
         }
@@ -806,7 +809,12 @@ impl RunningConfig {
         let absolute_path: PathBuf = if Path::new(&path).is_absolute() {
             path
         } else {
-            std::env::current_dir()?.join(path)
+            if cfg!(not(target_os = "wasi")) {
+                std::env::current_dir()?.join(path)
+            } else {
+                // current_dir unimplemented on wasi
+                path
+            }
         };
 
         let filter = |dir_entry: io::Result<fs::DirEntry>| {

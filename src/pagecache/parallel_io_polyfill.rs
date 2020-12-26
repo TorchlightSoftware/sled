@@ -14,6 +14,16 @@ type MutexInit = fn() -> Mutex<()>;
 static GLOBAL_FILE_LOCK: crate::Lazy<Mutex<()>, MutexInit> =
     crate::Lazy::new(init_mu);
 
+// polyfill for WASI since it has no try_clone
+fn try_clone(file: &File) -> io::Result<File> {
+    #[cfg(not(target_os = "wasi"))]
+    file.try_clone();
+
+    #[cfg(target_os = "wasi")]
+    //Ok(File { inner: self.inner.duplicate()? })
+    panic!("try_clone not implemented")
+}
+
 pub(crate) fn pread_exact_or_eof(
     file: &File,
     mut buf: &mut [u8],
@@ -21,7 +31,7 @@ pub(crate) fn pread_exact_or_eof(
 ) -> io::Result<usize> {
     let _lock = GLOBAL_FILE_LOCK.lock();
 
-    let mut f = file.try_clone()?;
+    let mut f = try_clone(file)?;
 
     let _ = f.seek(io::SeekFrom::Start(offset))?;
 
@@ -48,7 +58,7 @@ pub(crate) fn pread_exact(
 ) -> io::Result<()> {
     let _lock = GLOBAL_FILE_LOCK.lock();
 
-    let mut f = file.try_clone()?;
+    let mut f = try_clone(file)?;
 
     let _ = f.seek(io::SeekFrom::Start(offset))?;
 
@@ -80,7 +90,7 @@ pub(crate) fn pwrite_all(
 ) -> io::Result<()> {
     let _lock = GLOBAL_FILE_LOCK.lock();
 
-    let mut f = file.try_clone()?;
+    let mut f = try_clone(file)?;
 
     let _ = f.seek(io::SeekFrom::Start(offset))?;
 

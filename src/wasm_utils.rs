@@ -1,4 +1,6 @@
 //! Utilities for improving debugging, messages, and error handling in WASM environments.
+
+#[doc(hidden)]
 #[cfg(feature = "console_error_panic_hook")]
 use std::panic;
 
