@@ -7,8 +7,6 @@ compile_error!(
 );
 
 pub fn setup_logger() {
-    use sled::wasm_utils::set_panic_hook;
-    set_panic_hook();
 
     use std::io::Write;
 
