@@ -7,7 +7,6 @@ compile_error!(
 );
 
 pub fn setup_logger() {
-
     use std::io::Write;
 
     fn tn() -> String {
